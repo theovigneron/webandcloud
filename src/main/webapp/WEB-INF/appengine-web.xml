@@ -10,6 +10,12 @@
     </include>
     <include path="/**.js" >
     </include>
+    <include path="/**.jsx" >
+    </include>
+    <include path="/**.png" >
+    </include>
+    <include path="/**.css" >
+    </include>
     
   </static-files>
   <system-properties>
@@ -18,7 +24,7 @@
 <!-- [START env_variables] -->
     <env-variables>
 <!--         <env-var name="ENDPOINTS_SERVICE_NAME" value="${endpoints.project.id}.appspot.com" /> -->
-        <env-var name="ENDPOINTS_SERVICE_NAME" value="sobike44.appspot.com" />
+        <env-var name="ENDPOINTS_SERVICE_NAME" value="projetpetitions.appspot.com" />
 
     </env-variables>
     <!-- [END env_variables] -->

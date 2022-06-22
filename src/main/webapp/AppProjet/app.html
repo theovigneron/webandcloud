@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>TinyPet</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google-signin-scope" content="profile email">
+<meta name="google-signin-client_id" content="757565010727-on2ha2ftblhh257cqpg1tsrij3c8v68n.apps.googleusercontent.com">
+<meta name="google-signin-plugin_name" content="stop bugging me">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="app.css">
+
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+<script src="https://unpkg.com/mithril/mithril.js"></script>
+
+</head>
+<body>
+
+<script>	
+var Petition = {
+    list: [],
+    userFilterList: [],
+    petitionFilterList: [],
+    topList: [],
+    formstate:{
+        "namePetition":"",
+        "email":"",
+        "description":"",        
+    },
+    rechercheUserForm: "",
+    recherchePetitionForm: "",
+    loadList: function() {
+        return m.request({
+            method: "GET",
+            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/petitions"
+        })
+        .then(function(result) {
+            Petition.list = [...result.items]
+            m.redraw()
+        })
+        
+    },
+    signPetition: function(petitionName, email){
+        m.request({
+            method: "GET",
+            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/petitionIsSignByUser/"+petitionName+"/"+email,
+        })
+        .then(function(result) {
+            if(result == undefined){
+                m.request({
+                    method: "GET",
+                    url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/addSignature/"+petitionName+"/"+email,
+                })
+                .then(function(result) {
+                    Petition.loadList()
+                    Petition.loadTop()
+                    m.redraw()
+                })
+            } else alert("Vous avez deja signé cette petition");
+        })
+    },
+    loadTop: function(){
+        return m.request({
+            method: "GET",
+            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/topPetitions"
+        })
+        .then(function(result) {
+            Petition.topList = [...result.items]
+            m.redraw()
+        })
+    },
+    save: function(){
+        m.request({
+            method: "GET",
+            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/petitionsGetName/"+Petition.formstate.namePetition,
+        })
+        .then(function(result) {
+            if(result == undefined){
+                console.log("save...",Petition.formstate.namePetition)
+                m.request({
+                    method: "GET",
+                    url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/createPetition/"+
+                    Petition.formstate.namePetition+"/"+
+                    Petition.formstate.email+"/"+
+                    Petition.formstate.description,
+                })
+                .then(function(result) {
+                    Petition.formstate.namePetition= ""
+                    Petition.formstate.email= ""
+                    Petition.formstate.description= ""
+                    Petition.loadList()
+                    m.redraw()
+                    m.route.set('/')
+                })
+            } else alert("Une pétition du même nom existe déjà, veuillez changer de nom");
+        })
+    },
+    loadUserReserach: function(){
+        return m.request({
+            method: "GET",
+            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/getUserPetition/"+Petition.rechercheUserForm
+        })
+        .then(function(result) {
+            console.log(result)
+            m.redraw()
+        })
+    },
+    loadPetitionResearch: function(){
+        return m.request({
+            method: "GET",
+            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/getPetitionUser/"+Petition.recherchePetitionForm
+        })
+        .then(function(result) {
+            console.log(result)
+            m.redraw()
+        })
+    }
+}
+
+
+function onSignIn(googleUser) {
+    var profile = googleUser.getBasicProfile();
+    UserProfile.ID = profile.getId()
+    UserProfile.name = profile.getName()
+    UserProfile.imageURL = profile.getImageUrl()
+    UserProfile.email = profile.getEmail()
+    m.route.set('/')
+}  	
+
+function signOut() {
+    var profile = gapi.auth2.getAuthInstance();
+    profile.signOut().then(function () {
+        alert("Vous êtes déconnecté");
+        UserProfile.ID = ""
+        UserProfile.name = ""
+        UserProfile.imageURL = ""
+        UserProfile.email = ""
+    });
+    m.route.set('/')
+}
+
+var UserProfile = {
+    "ID":"",
+    "name":"",
+    "imageURL":"",
+    "email":""
+}
+
+function formIsCompleted(){
+    return Petition.formstate.namePetition.trim().length >0 && Petition.formstate.description.trim().length>0 && Petition.formstate.email.trim().length>0
+}
+
+var CreatePetition = {
+    oninit: function(){
+        if(UserProfile.ID===""){
+            alert("Vous devez être connecté pour créer une pétition")
+            m.route.set('/')
+        }
+    },
+    view: function() {
+        return [
+            m("header", m(Menu)),
+            m("form.form_CreatePetition", {
+            onsubmit: function(e) {
+                e.preventDefault()
+                console.log(Petition.formstate.namePetition.trim().length)
+                console.log(Petition.formstate.email.trim().length)
+                console.log(Petition.formstate.description.trim().length)
+                Petition.formstate.email = UserProfile.email
+                if(formIsCompleted()){
+                    Petition.save()
+                }
+                else alert("Un des champs n'a pas été rempli")
+            }
+            },[
+            m("label", "Nom de la petition 2 "),
+            m("input[type=text]", {
+                oninput: function (e) {Petition.formstate.namePetition=e.target.value},
+                value: Petition.formstate.namePetition
+            }),
+            m("label", "Description de la petition"),
+            m('input[type=text]', {
+                oninput: function (e) {Petition.formstate.description=e.target.value},
+                value: Petition.formstate.description
+            }),
+            m("label", "Createur"),
+            m("input[disabled=true][type=email]", {
+                value: UserProfile.email
+            }),
+            m('button[type="submit"]', {class: "btn btn-primary"}, "Créer"),
+        ])]
+    }
+}
+
+
+
+
+var petitionCase = {
+    view:function(vnode) {
+        return m("div", { key: vnode.attrs.properties.namePetition, className: 'petitionCase' }, [
+            m("img",{ src: "./altimg.png" }),
+            m("p", { className: 'petitionCase_namePetition', style: {margin: 0, fontweight: "bold"}} ,vnode.attrs.properties.namePetition),
+            m("p", { className: 'petitionCase_email'},"createur : "+ vnode.attrs.properties.email),
+            m("p", { className: 'petitionCase_description'}, vnode.attrs.properties.description),
+            m("div", {className: "petitionCase_footer"},[
+                m("p", { className: 'petitionCase_footer_votecount'}, vnode.attrs.properties.voteCount),
+                m("button", { onclick: function(){ 
+                    if(UserProfile.ID===""){
+                        alert("Un des champs n'a pas été rempli")
+                    } else {
+                        Petition.signPetition(vnode.attrs.properties.namePetition, UserProfile.email) 
+                    }
+                }}, "signer")
+            ])
+        ])
+    }
+}
+
+var ListPetitions  = {
+    oninit: Petition.loadList,
+    view: function() {
+        return [
+            m("header", m(Menu)),
+            m("h1", "ListPetitions"),
+            m("main",[
+                Petition.list.map((item, index) => (
+                    m(petitionCase, item)
+                ))
+            ])
+        ]
+    }   
+}
+
+var ListTop  = {
+    oninit: Petition.loadTop,
+    view: function() {
+        console.log(Petition.topList)
+        Petition.topList.sort((Petition1, Petition2) => (parseInt(Petition1.properties.creationDate) - parseInt(Petition2.properties.creationDate)) ).map((item, index) => (
+            console.log(item.properties)
+        ))
+        return [
+            m("header", m(Menu)),
+            m("h1", "Top 100 des petitions les plus signé"),
+            m("main",[
+                Petition.topList.sort((Petition1, Petition2) => (parseInt(Petition1.properties.creationDate) - parseInt(Petition2.properties.creationDate)) ).map((item, index) => (
+                    m(petitionCase, item)
+                ))
+            ])          
+        ]
+    }   
+}
+
+var RechercherParUser  = {
+    view: function() {
+        console.log(Petition.topList)
+        return [
+            m("header", m(Menu)),
+            m("h1", "RechercherParUser"),
+            m("form.form_RechercherParUser", {
+            onsubmit: function(e) {
+                e.preventDefault()
+                Petition.formstate.email = UserProfile.email
+                if(Petition.rechercheUserForm.length > 0){
+                    Petition.loadUserReserach()
+                }
+                else alert("Veuillez renseigner une recherche à effectuer")
+            }
+            },[
+                m('input[type=text]', {
+                    oninput: function (e) {Petition.rechercheUserForm =e.target.value},
+                    value: Petition.rechercheUserForm
+                })
+            ])       
+        ]
+    }   
+}
+
+var RechercherParNomDePetition  = {
+    view: function() {
+        console.log(Petition.topList)
+        return [
+            m("header", m(Menu)),
+            m("h1", "Recherche par nom de petitions"),
+            m("form.form_RechercherParNomDePetition", {
+            onsubmit: function(e) {
+                e.preventDefault()
+                Petition.formstate.email = UserProfile.email
+                if(Petition.rechercheUserForm.length > 0){
+                    Petition.loadPetitionResearch()
+                }
+                else alert("Veuillez renseigner une recherche à effectuer")
+            }
+            },[
+                m('input[type=text]', {
+                    oninput: function (e) {Petition.recherchePetitionForm =e.target.value},
+                    value: Petition.recherchePetitionForm
+                })
+            ])       
+        ]
+    }   
+}
+
+var Menu = {
+    view: function() {
+        return [m("nav", [
+            m(m.route.Link, {href: "/"}, "Home"),
+            m(m.route.Link, {href: "/CreatePetition"}, "CreatePetition"),
+            m(m.route.Link, {href: "/ListTop"}, "ListTop"),
+            m(m.route.Link, {href: "/RechercherParUser"}, "RechercherParUser"),
+            m(m.route.Link, {href: "/RechercherParNomDePetition"}, "RechercherParNomDePetition"),
+            m("div",
+                UserProfile.ID==="" 
+                    ? m("div", {
+                        "class":"g-signin2",
+                        "data-theme":"dark",
+                        "data-onsuccess": "onSignIn"
+                    })
+                    : m("button", { onclick: function(){ signOut() }}, "Se déconnecter") 
+            ),
+        ]),
+    ]
+    }
+}
+
+m.route(document.body, "/", {
+    "/": ListPetitions,
+    "/CreatePetition": CreatePetition,
+    "/ListTop": ListTop,
+    "/RechercherParUser": RechercherParUser,
+    "/RechercherParNomDePetition": RechercherParNomDePetition,
+})
+
+</script>
+</body>
+</html>
