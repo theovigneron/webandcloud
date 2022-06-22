@@ -121,7 +121,7 @@ public class PetitionsEndpoint {
 
     @ApiMethod(name = "myPetitions", httpMethod = HttpMethod.GET)
 	public List<Entity> myPetitions(@Named("email") String email) {
-		Query q = new Query("Petition").setFilter(new FilterPredicate("mail", FilterOperator.EQUAL, email));
+		Query q = new Query("Petition").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, email));
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		PreparedQuery pq = datastore.prepare(q);
 		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(20));

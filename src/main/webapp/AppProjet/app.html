@@ -46,7 +46,7 @@ var Petition = {
     loadMyList: function() {
         return m.request({
             method: "GET",
-            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/Mypetitions"+UserProfile.email,
+            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/myPetitions/"+UserProfile.email,
         })
         .then(function(result) {
             Petition.mylist = [...result.items]
