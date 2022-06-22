@@ -22,6 +22,7 @@
 <script>	
 var Petition = {
     list: [],
+    mylist: [],
     userFilterList: [],
     petitionFilterList: [],
     topList: [],
@@ -39,6 +40,16 @@ var Petition = {
         })
         .then(function(result) {
             Petition.list = [...result.items]
+            m.redraw()
+        })  
+    },
+    loadMyList: function() {
+        return m.request({
+            method: "GET",
+            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/Mypetitions"+UserProfile.email,
+        })
+        .then(function(result) {
+            Petition.mylist = [...result.items]
             m.redraw()
         })
         
@@ -79,7 +90,6 @@ var Petition = {
         })
         .then(function(result) {
             if(result == undefined){
-                console.log("save...",Petition.formstate.namePetition)
                 m.request({
                     method: "GET",
                     url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/createPetition/"+
@@ -101,20 +111,20 @@ var Petition = {
     loadUserReserach: function(){
         return m.request({
             method: "GET",
-            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/getUserPetition/"+Petition.rechercheUserForm
+            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/userPetition/"+Petition.rechercheUserForm,
         })
         .then(function(result) {
-            console.log(result)
+            Petition.userFilterList = result.items
             m.redraw()
         })
     },
     loadPetitionResearch: function(){
         return m.request({
             method: "GET",
-            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/getPetitionUser/"+Petition.recherchePetitionForm
+            url: "https://projetpetitions.ew.r.appspot.com/_ah/api/petitionsApi/v1/petitionUser/"+Petition.recherchePetitionForm,
         })
         .then(function(result) {
-            console.log(result)
+            Petition.petitionFilterList = result.items
             m.redraw()
         })
     }
@@ -166,9 +176,6 @@ var CreatePetition = {
             m("form.form_CreatePetition", {
             onsubmit: function(e) {
                 e.preventDefault()
-                console.log(Petition.formstate.namePetition.trim().length)
-                console.log(Petition.formstate.email.trim().length)
-                console.log(Petition.formstate.description.trim().length)
                 Petition.formstate.email = UserProfile.email
                 if(formIsCompleted()){
                     Petition.save()
@@ -202,11 +209,11 @@ var petitionCase = {
     view:function(vnode) {
         return m("div", { key: vnode.attrs.properties.namePetition, className: 'petitionCase' }, [
             m("img",{ src: "./altimg.png" }),
-            m("p", { className: 'petitionCase_namePetition', style: {margin: 0, fontweight: "bold"}} ,vnode.attrs.properties.namePetition),
-            m("p", { className: 'petitionCase_email'},"createur : "+ vnode.attrs.properties.email),
-            m("p", { className: 'petitionCase_description'}, vnode.attrs.properties.description),
-            m("div", {className: "petitionCase_footer"},[
-                m("p", { className: 'petitionCase_footer_votecount'}, vnode.attrs.properties.voteCount),
+            m("p.petitionCase_namePetition", { style: {margin: 0, fontweight: "bold"}} ," Titre : "+ vnode.attrs.properties.namePetition),
+            m("p.petitionCase_email","createur : "+ vnode.attrs.properties.email),
+            m("p.petitionCase_description", "description : "+ vnode.attrs.properties.description),
+            m("div.petitionCase_footer",[
+                m("p", { className: 'petitionCase_footer_votecount'}, " nombre de signature : "+  vnode.attrs.properties.voteCount),
                 m("button", { onclick: function(){ 
                     if(UserProfile.ID===""){
                         alert("Un des champs n'a pas été rempli")
@@ -237,15 +244,32 @@ var ListPetitions  = {
 var ListTop  = {
     oninit: Petition.loadTop,
     view: function() {
-        console.log(Petition.topList)
-        Petition.topList.sort((Petition1, Petition2) => (parseInt(Petition1.properties.creationDate) - parseInt(Petition2.properties.creationDate)) ).map((item, index) => (
-            console.log(item.properties)
-        ))
         return [
             m("header", m(Menu)),
             m("h1", "Top 100 des petitions les plus signé"),
             m("main",[
-                Petition.topList.sort((Petition1, Petition2) => (parseInt(Petition1.properties.creationDate) - parseInt(Petition2.properties.creationDate)) ).map((item, index) => (
+                Petition.topList.sort((Petition1, Petition2) => (parseInt(Petition2.properties.creationDate) - parseInt(Petition1.properties.creationDate)) ).map((item, index) => (
+                    m(petitionCase, item)
+                ))
+            ])          
+        ]
+    }   
+}
+
+var MyPetitions  = {
+    oninit: function(){
+        Petition.loadMyList
+        if(UserProfile.ID===""){
+            alert("Vous devez être connecté pour aller dans cette section")
+            m.route.set('/')
+        }
+    },
+    view: function() {
+        return [
+            m("header", m(Menu)),
+            m("h1", "Mes petitions"),
+            m("main",[
+                Petition.mylist.map((item, index) => (
                     m(petitionCase, item)
                 ))
             ])          
@@ -255,50 +279,71 @@ var ListTop  = {
 
 var RechercherParUser  = {
     view: function() {
-        console.log(Petition.topList)
+        console.log(Petition.userFilterList)
         return [
             m("header", m(Menu)),
             m("h1", "RechercherParUser"),
-            m("form.form_RechercherParUser", {
-            onsubmit: function(e) {
-                e.preventDefault()
-                Petition.formstate.email = UserProfile.email
-                if(Petition.rechercheUserForm.length > 0){
-                    Petition.loadUserReserach()
+            m("div.containerRecherche", [
+                m("form.form_RechercherParUser", {
+                onsubmit: function(e) {
+                    e.preventDefault()
+                    Petition.formstate.email = UserProfile.email
+                    if(Petition.rechercheUserForm.length > 0){
+                        Petition.loadUserReserach()
+                    }
+                    else alert("Veuillez renseigner une recherche à effectuer")
                 }
-                else alert("Veuillez renseigner une recherche à effectuer")
-            }
-            },[
-                m('input[type=text]', {
-                    oninput: function (e) {Petition.rechercheUserForm =e.target.value},
-                    value: Petition.rechercheUserForm
-                })
-            ])       
+                },[
+                    m('input[type=text]', {
+                        oninput: function (e) {Petition.rechercheUserForm =e.target.value},
+                        value: Petition.rechercheUserForm
+                    })
+                ]),
+                m("div",[
+                    Petition.userFilterList.map((item, index) => (
+                        m("div.sectionPlist", [
+                            m("p","email : "+ item.properties.email ),
+                            m("p","Nom de la petition: "+ item.properties.namePetition ),
+                        ])
+                    ))
+                ]) 
+            ]),                   
         ]
     }   
 }
 
 var RechercherParNomDePetition  = {
+    
     view: function() {
-        console.log(Petition.topList)
+        console.log(Petition.petitionFilterList)
         return [
             m("header", m(Menu)),
             m("h1", "Recherche par nom de petitions"),
-            m("form.form_RechercherParNomDePetition", {
-            onsubmit: function(e) {
-                e.preventDefault()
-                Petition.formstate.email = UserProfile.email
-                if(Petition.rechercheUserForm.length > 0){
-                    Petition.loadPetitionResearch()
+            m("div.containerRecherche", [
+                m("form.form_RechercherParNomDePetition", {
+                onsubmit: function(e) {
+                    e.preventDefault()
+                    Petition.formstate.email = UserProfile.email
+                    if(Petition.recherchePetitionForm.length > 0){
+                        Petition.loadPetitionResearch()
+                    }
+                    else alert("Veuillez renseigner une recherche à effectuer")
                 }
-                else alert("Veuillez renseigner une recherche à effectuer")
-            }
-            },[
-                m('input[type=text]', {
-                    oninput: function (e) {Petition.recherchePetitionForm =e.target.value},
-                    value: Petition.recherchePetitionForm
-                })
-            ])       
+                },[
+                    m('input[type=text]', {
+                        oninput: function (e) {Petition.recherchePetitionForm =e.target.value},
+                        value: Petition.recherchePetitionForm
+                    })
+                ]),
+                m("div",[
+                    Petition.petitionFilterList.map((item, index) => (
+                        m("div.sectionPlist", [
+                            m("p","email : "+ item.properties.email ),
+                            m("p","Nom de la petition: "+ item.properties.namePetition ),
+                        ])
+                    ))
+                ])     
+            ])
         ]
     }   
 }
@@ -311,6 +356,7 @@ var Menu = {
             m(m.route.Link, {href: "/ListTop"}, "ListTop"),
             m(m.route.Link, {href: "/RechercherParUser"}, "RechercherParUser"),
             m(m.route.Link, {href: "/RechercherParNomDePetition"}, "RechercherParNomDePetition"),
+            m(m.route.Link,  {href: "/MyPetitions"}, "Mes petitions"),
             m("div",
                 UserProfile.ID==="" 
                     ? m("div", {
@@ -331,6 +377,8 @@ m.route(document.body, "/", {
     "/ListTop": ListTop,
     "/RechercherParUser": RechercherParUser,
     "/RechercherParNomDePetition": RechercherParNomDePetition,
+    "/MyPetitions": MyPetitions,
+
 })
 
 </script>

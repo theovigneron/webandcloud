@@ -24,6 +24,7 @@ import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.PropertyProjection;
@@ -104,6 +105,7 @@ public class PetitionsEndpoint {
         datastore.put(userSignPetitionEntity);
 		return  result;
 	}
+
     @ApiMethod(name = "createPetition", httpMethod = HttpMethod.GET)
 	public Entity createPetition(@Named("namePetition") String namePetition, @Named("email") String email, @Named("description") String description) {
 		Entity e = new Entity("Petition", ""+namePetition);
@@ -117,6 +119,15 @@ public class PetitionsEndpoint {
 		return  e;
 	}
 
+    @ApiMethod(name = "myPetitions", httpMethod = HttpMethod.GET)
+	public List<Entity> myPetitions(@Named("email") String email) {
+		Query q = new Query("Petition").setFilter(new FilterPredicate("mail", FilterOperator.EQUAL, email));
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		PreparedQuery pq = datastore.prepare(q);
+		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(20));
+		return result;
+	}
+
     @ApiMethod(name = "topPetitions", httpMethod = HttpMethod.GET)
 	public List<Entity> topPetitions() {
 		Query q = new Query("Petition").addSort("voteCount", SortDirection.DESCENDING);
@@ -126,12 +137,21 @@ public class PetitionsEndpoint {
 		return result;
 	}
 
-    @ApiMethod(name = "getUserPetition", httpMethod = HttpMethod.GET)
-	public List<Entity> getUserPetition(@Named("predicatmail") String predicatmail) {
-		Query q = new Query("UserSignPetition").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, predicatmail));
+    @ApiMethod(name = "userPetition", httpMethod = HttpMethod.GET)
+	public List<Entity> userPetition(@Named("predicatmail") String predicatmail) {
+		Query q = new Query("UserSignPetition").setFilter(new FilterPredicate(Entity.KEY_RESERVED_PROPERTY, FilterOperator.GREATER_THAN, KeyFactory.createKey("UserSignPetition",predicatmail)));
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		PreparedQuery pq = datastore.prepare(q);
-		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(20));
+		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(100));
+		return result;
+	}
+
+    @ApiMethod(name = "petitionUser", httpMethod = HttpMethod.GET)
+	public List<Entity> petitionUser(@Named("predicatPeti") String predicatPeti) {
+		Query q = new Query("PetitionSignByUser").setFilter(new FilterPredicate(Entity.KEY_RESERVED_PROPERTY, FilterOperator.GREATER_THAN, KeyFactory.createKey("PetitionSignByUser",predicatPeti)));
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		PreparedQuery pq = datastore.prepare(q);
+		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(100));
 		return result;
 	}
 
