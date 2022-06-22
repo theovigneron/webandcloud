@@ -1,85 +1,24 @@
-# webandcloud
+URL du depot git : https://github.com/theovigneron/webandcloud/
+URL de la google App: https://projetpetitions.ew.r.appspot.com/
 
-**Be sure your maven has access to the web**
-* you should have file ~/.m2/settings.xml
-* otherwise cp ~molli-p/.m2/settings.xml ~/.m2/
+Groupe : Vigneron Théo , Dzianis Yudzitski, Mikhail Kuchukhidze
 
-```
-molli-p@remote:~/.m2$ cat settings.xml
-<settings>
- <proxies>
- <proxy>
-      <active>true</active>
-      <protocol>https</protocol>
-      <host>proxy.ensinfo.sciences.univ-nantes.prive</host>
-      <port>3128</port>
-    </proxy>
-  </proxies>
-</settings>
-```
+Kind Petition pour la gestion des petitions 
+![image](https://user-images.githubusercontent.com/48760339/175144728-75d98b2d-f415-420d-8d4b-13e0b6ec455f.png)
 
-## import and run in eclipse
-* install the code in your home:
-```
- cd ~
- git clone https://github.com/momo54/webandcloud.git
- cd webandcloud
- mvn install
-```
-* Change "sobike44" with your google project ID in pom.xml
-* Change "sobike44" with your google project ID in src/main/webapp/WEB-INF/appengine-web.xml
+Kind PetitionSignByUser pour savoir qui à signé la petition
+![image](https://user-images.githubusercontent.com/48760339/175144795-66c0c23d-319a-4ad1-8524-3b0760226fdf.png)
 
-## Run in eclipse
+Kind UserSignPetition  pour savoir qui à signé pour une personne quelle petition elle à signé
+![image](https://user-images.githubusercontent.com/48760339/175144911-7a3067f6-c313-46ff-a24c-9e9fd8003a13.png)
 
-* start an eclipse with gcloud plugin
-```
- /media/Enseignant/eclipse/eclipse
- or ~molli-p/eclipse/eclipse
- ```
-* import the maven project in eclipse
- * File/import/maven/existing maven project
- * browse to ~/webandcloud
- * select pom.xml
- * Finish and wait
- * Ready to deploy and run...
- ```
- gcloud app create error...
- ```
- Go to google cloud shell console (icon near your head in google console)
- ```
- gcloud app create
- ```
-
-
-## Install and Run 
-* (gcloud SDK must be installed first. see https://cloud.google.com/sdk/install)
- * the gcloud command should be in your path. Run the following command to initialize your local install of gcloud.
-```
-gcloud init
-```
-* git clone https://github.com/momo54/webandcloud.git
-* cd webandcloud
-* running local (http://localhost:8080):
-```
-mvn package
-mvn appengine:run
-```
-* Deploying at Google (need gcloud configuration, see error message -> tell you what to do... 
-)
-```
-mvn appengine:deploy
-gcloud app browse
-```
-
-# Access REST API
-* (worked before) 
-```
-https://<yourapp>.appstpot.com/_ah/api/explorer
-```
-* New version of endpoints (see https://cloud.google.com/endpoints/docs/frameworks/java/adding-api-management?hl=fr):
-```
-mvn clean package
-mvn endpoints-framework:openApiDocs
-gcloud endpoints services deploy target/openapi-docs/openapi.json 
-mvn appengine:deploy
-```
+Ce qui à été fais :
+- Connexion google
+- Deconnexion google
+- requetes permettant de lister les petitions
+- requetes permettant de creer les petitions
+- requetes permettant de lister les 100 petitions avec le plus de vote mais aussi par date de creation
+- requetes permettant de lister les petitions signées pour un email donné
+- requetes permettant de lister qui à signé les petitions commencants par ce nom 
+- requetes permettant de lister les petitions que l'utilisateur connecté à crée
+- requetes permettant de signer une petitions
