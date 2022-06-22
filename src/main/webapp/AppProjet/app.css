@@ -59,7 +59,7 @@ main{
     font-weight: bold;
 }
 
-form{
+.form_CreatePetition{
     display: flex;
     flex-direction: column;
     /* margin: 5%; */
@@ -88,14 +88,14 @@ form{
 
 .form_RechercherParUser, .form_RechercherParNomDePetition{
     background: aliceblue;
-    height: 75%;
+    /* height: 75%; */
     display: flex;
     flex-direction: column;
-    margin: 5%;
+    /* margin: 5%; */
     padding: 10px;
     border: 10px;
     border-radius: 10px;
-    box-shadow: rgb(0 0 0 / 35%) 0px 5px 15px;
+    /* box-shadow: rgb(0 0 0 / 35%) 0px 5px 15px;
 }
 
 form>input{

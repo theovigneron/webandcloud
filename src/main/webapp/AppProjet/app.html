@@ -246,7 +246,7 @@ var ListTop  = {
     view: function() {
         return [
             m("header", m(Menu)),
-            m("h1", "Top 100 des petitions les plus signé"),
+            m("h1", "Top 100 des petitions les plus signée"),
             m("main",[
                 Petition.topList.sort((Petition1, Petition2) => (parseInt(Petition2.properties.creationDate) - parseInt(Petition1.properties.creationDate)) ).map((item, index) => (
                     m(petitionCase, item)
@@ -258,7 +258,7 @@ var ListTop  = {
 
 var MyPetitions  = {
     oninit: function(){
-        Petition.loadMyList
+        Petition.loadMyList()
         if(UserProfile.ID===""){
             alert("Vous devez être connecté pour aller dans cette section")
             m.route.set('/')
@@ -282,7 +282,7 @@ var RechercherParUser  = {
         console.log(Petition.userFilterList)
         return [
             m("header", m(Menu)),
-            m("h1", "RechercherParUser"),
+            m("h1", "Rechercher par nom d'utilisateur"),
             m("div.containerRecherche", [
                 m("form.form_RechercherParUser", {
                 onsubmit: function(e) {
